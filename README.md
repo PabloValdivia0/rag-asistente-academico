@@ -1,85 +1,82 @@
-# rag-asistente-academico
-Asistente académico con RAG para EP1 ISY0101
+# Proyecto Integrador: RAG y Agente Autónomo para Gestión Académica (ISY0101)
 
----------------------------------------------------------------------------------
+## Integrante
+* [Pablo Valdivia]
 
-# RAG Asistente Académico - EP1 ISY0101
+## 📌 Descripción General
+Este repositorio contiene el desarrollo completo para las Evaluaciones Parciales 1 y 2 de la asignatura *Ingeniería de Soluciones con IA*.
+*   **EP1:** Construcción de un sistema RAG (Retrieval-Augmented Generation) para consultar normativas académicas.
+*   **EP2:** Evolución hacia un **Agente Funcional Autónomo** que integra el RAG anterior como una herramienta de consulta, sumando herramientas de razonamiento y escritura, junto con sistemas de memoria y planificación.
 
-Sistema RAG (Retrieval-Augmented Generation) para consultar reglamentos y normativas académicas de una institución de educación superior.
+## 🏗️ Arquitectura y Orquestación (IE2, IE8, IE9)
+*   **Framework Elegido:** **LangChain** (utilizando `create_tool_calling_agent`). Se seleccionó por su alta escalabilidad y capacidad para integrar herramientas modulares mediante el decorador `@tool`, garantizando compatibilidad técnica.
+*   **Modelo LLM:** Google Gemini (`gemini-3.8-flash`).
+*   **Integración entre módulos (Decisiones de Diseño):**
+    1.  *Consulta:* El agente se conecta a la base de datos vectorial FAISS (creada en la EP1) para extraer información real de los documentos.
+    2.  *Razonamiento:* Una función lógica evalúa las notas del alumno contra los prerrequisitos.
+    3.  *Escritura:* Una herramienta que permite al agente redactar correos formales de solicitud.
 
-## 🎯 Caso de uso
+**Diagrama de Orquestación:**
+*(Nota para el estudiante: Genera el diagrama en Draw.io con el código Mermaid proporcionado, descárgalo como imagen, súbelo a la carpeta `docs/` de tu GitHub y reemplaza esta línea con la imagen. Ejemplo: `![Diagrama](docs/diagrama_ep2.png)`)*
 
-Los estudiantes y docentes pierden tiempo buscando información dispersa en reglamentos, mallas y protocolos. Este asistente responde preguntas en lenguaje natural y cita la fuente exacta.
+## 🧠 Sistema de Memoria y Recuperación de Contexto (IE3, IE4)
+Para asegurar la continuidad en tareas prolongadas, el agente implementa dos capas de memoria:
+1.  **Memoria a Corto Plazo:** Utiliza `ConversationBufferMemory` para mantener el hilo de la conversación actual (ej. recordar el contexto de la última pregunta del alumno).
+2.  **Memoria a Largo Plazo:** Utiliza un archivo de persistencia (`memoria_largo_plazo.txt` en Google Drive). El agente lee las interacciones pasadas al iniciar y guarda un resumen al finalizar, permitiendo retomar el contexto en futuras sesiones.
 
-## 🏗️ Arquitectura
+## ⚙️ Planificación y Toma de Decisiones (IE5, IE7)
+El agente opera bajo un Prompt de Orquestación estructurado (patrón Plan-and-Execute / ReAct):
+1.  **Análisis:** Evalúa la consulta del usuario.
+2.  **Planificación:** Si el usuario pide inscribir un ramo, el agente planifica consultar primero el reglamento y luego validar las notas.
+3.  **Decisión Adaptativa:** Si la herramienta de razonamiento arroja "RECHAZADO", el agente **cambia su comportamiento** dinámicamente y utiliza la herramienta de escritura para generar una solicitud de excepción, en lugar de simplemente negar la respuesta.
 
-1. Ingesta de documentos (TXT/PDF)
-2. Chunking con `RecursiveCharacterTextSplitter`
-3. Embeddings con `gemini-embedding-001`
-4. Vector store con FAISS
-5. Retriever semántico (top-k=4)
-6. Prompt anclado (grounding)
-7. Generación con `gemini-3.6-flash`
-8. Evaluación con LLM-as-a-Judge
+## 🔄 Ejemplos de Flujos de Trabajo (IE6)
+*(Nota para el estudiante: En tu informe y aquí en el README, debes incluir capturas de pantalla del `verbose=True` de Colab donde se vea el razonamiento paso a paso. Puedes resumirlo así):*
 
-Ver diagrama completo en `docs/diagrama_arquitectura.png`.
+**Flujo 1: Consulta al RAG Oficial**
+*   **Input:** "¿Cuál es el requisito de asistencia?"
+*   **Thought:** El agente decide usar la herramienta de consulta RAG.
+*   **Action:** Invoca `buscar_reglamento_educativo`.
+*   **Output:** Respuesta exacta basada en el Artículo 1 del documento.
 
-## 🚀 Cómo ejecutar
+**Flujo 2: Toma de Decisión y Escritura**
+*   **Input:** "Quiero inscribir Base de Datos II, pero no he aprobado Base de Datos I."
+*   **Thought:** El agente decide validar prerrequisitos.
+*   **Action:** Usa `validar_prerrequisito`.
+*   **Observation:** Retorna "RECHAZADO".
+*   **Decisión:** El agente cambia su plan y usa `redactar_correo`.
+*   **Output:** Entrega el borrador del correo para pedir la excepción.
+
+## 🚀 Instrucciones para Ejecutar el Sistema
+El proyecto está diseñado para ejecutarse íntegramente en **Google Colab**.
 
 ### Requisitos
-- Python 3.10+
-- Cuenta de Google AI Studio (API Key de Gemini)
+- Cuenta de Google (para Colab y Google AI Studio).
+- API Key de Gemini.
 
-### Instalación
+### Configuración y Ejecución
+1. Abrir el archivo `notebooks/EP2_Agente_Autonomo.ipynb` en Google Colab.
+2. En la barra lateral izquierda de Colab (ícono de llave 🔑), agregar un nuevo secreto llamado `GOOGLE_API_KEY` con tu clave de API.
+3. Ejecutar la **Celda 1** para instalar las dependencias necesarias.
+4. Ejecutar la **Celda 2** (solicitará permiso para montar tu Google Drive para cargar el índice FAISS de la EP1).
+5. Ejecutar las **Celdas 3 y 4** para definir las herramientas, la memoria y crear el agente.
+6. Ejecutar la **Celda 5** para correr las pruebas automatizadas y visualizar la demostración de autonomía y toma de decisiones.
 
-\`\`\`bash
-git clone https://github.com/PabloValdivia0/rag-asistente-academico.git
-cd rag-asistente-academico
-pip install -r requirements.txt
-\`\`\`
+## 🛠️ Tecnologías Utilizadas
+- **Lenguaje:** Python 3.10+
+- **Framework de Agentes:** LangChain
+- **Modelo de Lenguaje:** Google Gemini
+- **Base de Datos Vectorial:** FAISS
+- **Entorno:** Google Colab
 
-### Configuración
+## 📝 Declaración de Uso de IA
+Este proyecto utilizó herramientas de IA (Gemini y ChatGPT) como apoyo para:
+- Estructuración y depuración de código técnico.
+- Redacción de la documentación técnica del README.
 
-Crea un archivo `.env` con:
+*Las conclusiones, justificaciones de diseño y reflexiones personales en el informe escrito fueron redactadas sin apoyo de IA.*
 
-\`\`\`
-GOOGLE_API_KEY=tu_api_key_aqui
-\`\`\`
-
-### Ejecución
-
-Abre el notebook en Google Colab:
-
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/PabloValdivia0/rag-asistente-academico/blob/main/notebooks/rag_asistente_academico.ipynb)
-
-O ejecuta los scripts en `/src`.
-
-## 📊 Resultados
-
-| Métrica | Valor |
-|---------|-------|
-| Chunks generados | 5 |
-| Vectores almacenados | 5 |
-| Latencia promedio | ~3 s |
-| Fidelidad promedio | 0.9 |
-
-## 🛠️ Tecnologías
-
-- LangChain
-- Google Gemini (chat + embeddings)
-- FAISS
-- Pydantic
-
-## 📝 Declaración de uso de IA
-
-Este proyecto utilizó IA (Gemini y ChatGPT) como apoyo para:
-- Redacción y estructura del código
-- Búsqueda de referencias técnicas
-
-Las conclusiones, justificaciones y reflexión personal fueron redactadas sin apoyo de IA.
-
-## 📚 Referencias
-
+## 📚 Referencias (Formato APA)
 - LangChain. (2024). *LangChain Documentation*. https://python.langchain.com/
 - Google. (2025). *Gemini API Documentation*. https://ai.google.dev/gemini-api/docs
 - Duoc UC. (2024). *Reglamento Académico*. https://www.duoc.cl/
